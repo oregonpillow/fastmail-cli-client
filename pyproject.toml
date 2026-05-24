@@ -1,0 +1,21 @@
+[project]
+name = "fastmail-cli"
+version = "0.1.0"
+description = "A CLI tool for interacting with the Fastmail JMAP API"
+readme = "README.md"
+authors = [
+    { name = "debian", email = "oregonpillow@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "typer>=0.15.0",
+    "requests>=2.32.0",
+    "rich>=14.0.0",
+]
+
+[project.scripts]
+fastmail = "fastmail_cli.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
