@@ -328,6 +328,67 @@ class JMAPClient:
         )
         return res
 
+    # ── Email keyword/label helpers ──────────────────────────────────────
+
+    def get_email_keywords(self, email_id: str) -> list[str]:
+        """Return the list of keywords (labels) on an email."""
+        res = self.call(
+            using=[self.USING_CORE, self.USING_MAIL],
+            method_calls=[
+                [
+                    "Email/get",
+                    {
+                        "accountId": self.get_account_id(),
+                        "ids": [email_id],
+                        "properties": ["id", "keywords"],
+                    },
+                    "a",
+                ]
+            ],
+        )
+        emails = res["methodResponses"][0][1]["list"]
+        if not emails:
+            raise ValueError(f"Email not found: {email_id}")
+        return list(emails[0].get("keywords", {}).keys())
+
+    def add_email_keyword(self, email_id: str, keyword: str) -> dict[str, Any]:
+        """Add a keyword (label) to an email."""
+        res = self.call(
+            using=[self.USING_CORE, self.USING_MAIL],
+            method_calls=[
+                [
+                    "Email/set",
+                    {
+                        "accountId": self.get_account_id(),
+                        "update": {
+                            email_id: {f"keywords/{keyword}": True},
+                        },
+                    },
+                    "a",
+                ]
+            ],
+        )
+        return res
+
+    def remove_email_keyword(self, email_id: str, keyword: str) -> dict[str, Any]:
+        """Remove a keyword (label) from an email."""
+        res = self.call(
+            using=[self.USING_CORE, self.USING_MAIL],
+            method_calls=[
+                [
+                    "Email/set",
+                    {
+                        "accountId": self.get_account_id(),
+                        "update": {
+                            email_id: {f"keywords/{keyword}": None},
+                        },
+                    },
+                    "a",
+                ]
+            ],
+        )
+        return res
+
     # ── Masked Email helpers ─────────────────────────────────────────────
 
     def list_masked_emails(self) -> list[dict[str, Any]]:

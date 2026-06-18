@@ -27,12 +27,14 @@ app = typer.Typer(
 mail_app = typer.Typer(help="Manage emails.", no_args_is_help=True)
 mailbox_app = typer.Typer(help="Manage mailboxes.", no_args_is_help=True)
 masked_app = typer.Typer(help="Manage masked email addresses.", no_args_is_help=True)
+label_app = typer.Typer(help="Manage labels (keywords) on emails.", no_args_is_help=True, invoke_without_command=True)
 
 migrate_app = typer.Typer(help="Migrate masked emails to another provider.", no_args_is_help=True)
 app.add_typer(mail_app, name="mail")
 app.add_typer(mailbox_app, name="mailbox")
 app.add_typer(masked_app, name="masked")
 masked_app.add_typer(migrate_app, name="migrate")
+mail_app.add_typer(label_app, name="label")
 
 console = Console()
 err_console = Console(stderr=True)
@@ -368,6 +370,55 @@ def mail_move(
 
     client.move_email(email_id, mailbox_id)
     console.print(f"[bold green]✓[/] Email moved to {mailbox or role}.")
+
+
+# ── Label commands ───────────────────────────────────────────────────────
+
+
+@label_app.callback()
+def label_callback() -> None:
+    """Manage labels (keywords) on emails."""
+
+
+@label_app.command("list")
+def label_list(
+    email_id: Annotated[str, typer.Argument(help="The ID of the email.")],
+) -> None:
+    """List all labels (keywords) on an email."""
+    client = _get_client()
+    keywords = client.get_email_keywords(email_id)
+
+    if not keywords:
+        console.print("[dim]No labels on this email.[/]")
+        return
+
+    table = Table(title="Labels")
+    table.add_column("Keyword", style="bold cyan")
+    for kw in sorted(keywords):
+        table.add_row(kw)
+    console.print(table)
+
+
+@label_app.command("create")
+def label_create(
+    email_id: Annotated[str, typer.Argument(help="The ID of the email.")],
+    label: Annotated[str, typer.Argument(help="The label (keyword) to add.")],
+) -> None:
+    """Add a label (keyword) to an email."""
+    client = _get_client()
+    client.add_email_keyword(email_id, label)
+    console.print(f"[bold green]✓[/] Label '{label}' added to email {email_id}.")
+
+
+@label_app.command("delete")
+def label_delete(
+    email_id: Annotated[str, typer.Argument(help="The ID of the email.")],
+    label: Annotated[str, typer.Argument(help="The label (keyword) to remove.")],
+) -> None:
+    """Remove a label (keyword) from an email."""
+    client = _get_client()
+    client.remove_email_keyword(email_id, label)
+    console.print(f"[bold green]✓[/] Label '{label}' removed from email {email_id}.")
 
 
 # ── Masked Email commands ────────────────────────────────────────────────
